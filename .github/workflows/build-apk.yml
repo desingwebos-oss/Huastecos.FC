@@ -3,6 +3,8 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+permissions:
+  contents: write
 defaults:
   run:
     working-directory: huastecos-apk
@@ -22,7 +24,12 @@ jobs:
       - name: Compilar APK
         working-directory: huastecos-apk/android
         run: chmod +x gradlew && ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: HuastecosFC-apk
-          path: huastecos-apk/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publicar en Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk HuastecosFC.apk
+          gh release delete apk-latest --cleanup-tag --yes -R ${{ github.repository }} || true
+          gh release create apk-latest HuastecosFC.apk -R ${{ github.repository }} \
+            --title "Huastecos FC (Android)" \
+            --notes "APK de Huastecos FC. Descarga HuastecosFC.apk e instálalo."

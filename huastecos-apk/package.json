@@ -1,0 +1,21 @@
+{
+  "name": "huastecos-fc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Huastecos FC - App Android",
+  "scripts": {
+    "assets": "capacitor-assets generate --android",
+    "android:add": "cap add android",
+    "sync": "cap sync android",
+    "apk": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

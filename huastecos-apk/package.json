@@ -7,12 +7,15 @@
     "assets": "capacitor-assets generate --android",
     "android:add": "cap add android",
     "sync": "cap sync android",
-    "apk": "cd android && ./gradlew assembleDebug"
+    "apk": "cd android && ./gradlew assembleDebug",
+    "ios:add": "cap add ios",
+    "sync:ios": "cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
     "@capacitor/app": "^7.0.0",
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

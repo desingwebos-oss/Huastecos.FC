@@ -1,1 +1,25 @@
-{"background_color":"#050914","description":"Huastecos FC - DEJATE DE PUTERIAS - Temporada 2026","display":"standalone","icons":[{"purpose":"any","sizes":"192x192","src":"logo.png","type":"image/png"},{"purpose":"any","sizes":"512x512","src":"logo.png","type":"image/png"}],"name":"Huastecos FC","orientation":"portrait","short_name":"Huastecos FC","start_url":"./index.html","theme_color":"#050914"}
+{
+  "name": "Huastecos FC",
+  "short_name": "Huastecos FC",
+  "description": "Huastecos FC - Temporada 2026",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050914",
+  "theme_color": "#050914",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

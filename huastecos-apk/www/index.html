@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#050914">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Huastecos FC">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Huastecos FC - Index</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
@@ -141,7 +148,8 @@ canvas.draw{position:absolute;inset:0;width:100%;height:100%;z-index:5;touch-act
 </style>
 </head>
 <body>
-<div class="header"><div class="header-top"><div class="logo-wrap"><img src="logo.png" class="logo-img" alt="Huastecos FC" onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"><div id="logoFb" class="logo-fallback" style="display:none">HFC</div><div class="title-block"><h1>HUASTECOS FC</h1><p><span class="dot-live"></span> DEJATE DE PUTERIAS • TEMPORADA 2026</p></div></div><div style="display:flex;gap:6px"><button class="btn btn-ghost" id="btnAdmin" style="padding:8px 12px;min-height:38px" onclick="openModal('admin')">🔒</button><button class="btn btn-gold" style="padding:8px 12px;min-height:38px" onclick="cargarDeNube(true)" style="padding:8px 12px;min-height:38px" title="Cargar datos reales de la nube">🔄</button><button class="btn btn-gold" style="padding:8px 12px;min-height:38px" onclick="openModal('addPlayer')">➕ Jugador</button></div></div></div>
+<div id="installBanner" style="display:none;background:linear-gradient(135deg,#D4AF37,#b8860b);color:#0a1e4a;padding:10px 14px;font-weight:800;font-size:13px;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200"><span id="installText">📲 Instala Huastecos FC en tu celular</span><span style="display:flex;gap:8px"><button id="installBtn" style="background:#0a1e4a;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800">Instalar</button><button onclick="document.getElementById('installBanner').style.display='none';localStorage.setItem('huastecos_instal_dismiss','1')" style="background:transparent;border:none;font-weight:900;font-size:16px">✕</button></span></div>
+<div class="header"><div class="header-top"><div class="logo-wrap"><img src="logo.png" class="logo-img" alt="Huastecos FC" onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"><div id="logoFb" class="logo-fallback" style="display:none">HFC</div><div class="title-block"><h1>HUASTECOS FC</h1><p><span class="dot-live"></span> DEJATE DE PUTERIAS • TEMPORADA 2026</p></div></div><div style="display:flex;gap:6px"><button class="btn btn-ghost" id="btnAdmin" style="padding:8px 12px;min-height:38px" onclick="openModal('admin')">🔒</button><button class="btn btn-gold" style="padding:8px 12px;min-height:38px" onclick="openModal('addPlayer')">➕ Jugador</button></div></div></div>
 
 <div class="stats-carousel" id="statsBar"></div>
 <div class="dots" id="statsDots"><i class="on"></i><i></i><i></i><i></i></div>
@@ -311,23 +319,34 @@ let a=document.createElement('a');a.download='huastecos-estrategia.jpg';a.href=c
 window.addEventListener('resize',()=>{if(document.getElementById('estrategiaFS').classList.contains('show'))resizeCanvas()});
 document.getElementById('statsBar').addEventListener('scroll',e=>{let idx=Math.round(e.target.scrollLeft/(e.target.scrollWidth/4));document.querySelectorAll('#statsDots i').forEach((d,i)=>d.classList.toggle('on',i===idx))});
 
-function cargarDeNube(mostrarAviso){
+function cargarDeNube(){
   fetch(SHEETS_API_URL).then(r=>r.json()).then(d=>{
     if(!d||!Array.isArray(d.jugadores)||!d.jugadores.length) return;
     // Solo reemplazar si la nube tiene datos reales (no demo de 14 con apodos cuando local ya tiene reales)
     // Si local es demo (14 jugadores y 0 partidos) y nube tiene partidos, la nube gana siempre
     let localEsDemo = jugadores.length===14 && partidos.length===0;
     let nubeTieneMas = d.jugadores.length!==jugadores.length || d.partidos.length!==partidos.length;
-    if(!localEsDemo && !nubeTieneMas && !mostrarAviso) return;
+    if(!localEsDemo && !nubeTieneMas) return;
     jugadores=d.jugadores; partidos=d.partidos||[]; pagos=d.pagos||[];
     if(Array.isArray(d.jugadas)) jugadasGuardadas=d.jugadas;
     try{localStorage.setItem('huastecos_jugadores_v2',JSON.stringify(jugadores));localStorage.setItem('huastecos_partidos_v2',JSON.stringify(partidos));localStorage.setItem('huastecos_pagos',JSON.stringify(pagos));localStorage.setItem('huastecos_jugadas',JSON.stringify(jugadasGuardadas));}catch(e){}
     renderAll(); try{initPitch();}catch(e){}
-    if(mostrarAviso) toast('✅ Datos cargados de la nube');
+    
   }).catch(()=>{});
 }
 
-renderAll();initPitch();setMode('mover');cargarDeNube(false);
+
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;mostrarInstalar();});
+function esIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+function estaInstalado(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+function mostrarInstalar(){if(estaInstalado())return;if(localStorage.getItem('huastecos_instal_dismiss')==='1')return;let b=document.getElementById('installBanner');if(!b)return;b.style.display='flex';if(esIOS() && !deferredPrompt){document.getElementById('installText').textContent='📲 En iPhone: toca Compartir y luego Agregar a pantalla de inicio';document.getElementById('installBtn').textContent='Cómo hacerlo';}}
+document.getElementById('installBtn')?.addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();let r=await deferredPrompt.userChoice;deferredPrompt=null;if(r && r.outcome==='accepted'){document.getElementById('installBanner').style.display='none';}}else if(esIOS()){alert('En iPhone: toca el botón Compartir (cuadro con flecha arriba) y luego Agregar a pantalla de inicio');}else{mostrarInstalar();}});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}});}
+setTimeout(()=>{if(!estaInstalado())mostrarInstalar();},2500);
+
+renderAll();initPitch();setMode('mover');cargarDeNube();setInterval(()=>{try{cargarDeNube();}catch(e){}},60000);
 </script>
 </body>
 </html>
+

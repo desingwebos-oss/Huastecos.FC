@@ -42,7 +42,7 @@ button{font-family:inherit}
 .dots i{width:6px;height:6px;border-radius:50%;background:#1e3a7a;display:block}
 .dots i.on{background:#D4AF37;box-shadow:0 0 8px #D4AF37}
 .hint{font-size:10px;color:#8fb0f0;text-align:center;padding-bottom:6px}
-.tabs{display:flex;gap:8px;padding:8px 12px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;position:sticky;top:calc(72px + var(--sat));z-index:90;background:#050914}
+.tabs,.tab{display:none!important;visibility:hidden!important;height:0!important;padding:0!important;margin:0!important;overflow:hidden!important;} .tabs-off{display:flex;gap:8px;padding:8px 12px;overflow-x:auto;white-space:nowrap;scrollbar-width:none;position:sticky;top:calc(72px + var(--sat));z-index:90;background:#050914}
 .tabs::-webkit-scrollbar{display:none}
 .tab{padding:11px 16px;border-radius:999px;border:1px solid #1e3a7a;background:#0f1d3a;color:#8fb0f0;cursor:pointer;font-size:12px;font-weight:800;flex-shrink:0}
 .tab.active{background:linear-gradient(135deg,#D4AF37,#b8860b);color:#0a1e4a;border-color:#D4AF37;box-shadow:0 0 18px rgba(212,175,55,.45)}
@@ -238,7 +238,7 @@ function borrarJugador(id){if(!isAdmin()){openModal('admin');return}if(!confirm(
 function borrarPartido(id){if(!isAdmin()){openModal('admin');return}partidos=partidos.filter(x=>String(x.id)!==String(id));save();renderAll()}
 function borrarPago(id){if(!isAdmin()){openModal('admin');return}pagos=pagos.filter(x=>String(x.id)!==String(id));save();renderAll()}
 let currentTab='tabla', prevTab='tabla';
-function switchTab(t){if(t==='estrategia'){openEstrategia();return}currentTab=t;prevTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));document.querySelectorAll('#bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));['tabla','jugadores','partidos','pagos'].forEach(v=>document.getElementById('view-'+v).style.display=v===t?'block':'none')}
+function guardTabs(){let el=document.getElementById('tabsBar');if(el)el.remove();document.querySelectorAll('.tabs,.tab').forEach(e=>e.remove());}document.addEventListener('DOMContentLoaded',guardTabs);setInterval(guardTabs,1000);function switchTab(t){if(t==='estrategia'){openEstrategia();return}currentTab=t;prevTab=t;document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.tab===t));document.querySelectorAll('#bottomNav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));['tabla','jugadores','partidos','pagos'].forEach(v=>document.getElementById('view-'+v).style.display=v===t?'block':'none')}
 function openEstrategia(){prevTab=currentTab==='estrategia'?prevTab:currentTab;document.getElementById('estrategiaFS').classList.add('show');document.body.style.overflow='hidden';setTimeout(initPitch,50)}
 function closeEstrategia(){document.getElementById('estrategiaFS').classList.remove('show');document.getElementById('estrategiaFS').classList.remove('vestidor');document.getElementById('vestidorHint').style.display='none';document.body.style.overflow='';switchTab(prevTab||'tabla')}
 function closeEstrategiaTo(t){document.getElementById('estrategiaFS').classList.remove('show');document.body.style.overflow='';switchTab(t)}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#150826">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Helena Cazadora de Misterios</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="home" class="screen active">
+  <div class="topbar"><div class="logo">🔦 HELENA <b>• MISTERIOS</b></div><button class="iconbtn" onclick="toggleMute()">🔊</button></div>
+  <div class="hero-card">
+    <span class="pill">★ NIÑA DETECTIVE • GUERRERA K-POP</span>
+    <div class="hero-flex">
+      <div class="hero-text">
+        <h1>HELENA<br><span>CAZADORA</span><br>DE MISTERIOS</h1>
+        <p>Gorra al revés, linterna en mano y mucho valor. Resuelve cada escenario, escapa del Devorador de Sombras y descubre quién era el impostor.</p>
+        <div class="btn-row">
+          <button class="btn btn-play" onclick="showLevels()">▶ JUGAR</button>
+          <button class="btn btn-white" onclick="showLevels()">🗺️ NIVELES</button>
+          <button class="btn btn-dark" onclick="showScreen('how')">ⓘ CÓMO JUGAR</button>
+        </div>
+        <div class="stats"><span>⭐ <b id="totalStars">0 / 12</b> estrellas</span><span>🗺️ Nivel desbloqueado: <b id="lvlUnlocked">1 de 4</b></span><span>👹 4 misterios</span></div>
+        <div class="prog">Progreso listo para guardarse.</div>
+      </div>
+      <div class="hero-img">
+        <div class="resolve">✦ ¡A resolver! ✦</div>
+        <div class="girl" style="background:linear-gradient(180deg,#fff,#ffd6f0);padding:6px;overflow:hidden"><img id="helenaHero" src="assets/helena.png" style="width:100%;height:100%;object-fit:contain;display:block" alt="Helena kawaii"></div>
+        <div class="yo-puedo">¡Yo puedo!</div>
+      </div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="e">🔍</div><b>Busca 5 pistas + 3 llaves</b><p>Explora cada rincón con tu linterna. Cuando tengas todo, corre a la puerta de escape.</p></div>
+    <div class="card"><div class="e">👻</div><b>Escóndete del Devorador</b><p>Si te ve, su barra de alerta sube. Usa armarios, arbustos y pupitres con brillo dorado.</p></div>
+    <div class="card"><div class="e">🔦</div><b>Gana estrellas K-pop</b><p>Escapa con tus 3 vidas y rápido para ganar 3 estrellas. Luego, adivina al impostor.</p></div>
+  </div>
+  <p class="small" style="text-align:center;margin-top:12px">PWA instalable • Funciona sin internet • Sin chat • Para niños</p>
+</div>
+
+<div id="levels" class="screen">
+  <div class="topbar"><button class="btn btn-dark" onclick="showScreen('home')">← Inicio</button><span>Elige tu misterio</span></div>
+  <h2 style="margin:14px 0 4px">🗺️ Elige escenario</h2>
+  <p class="small">Completa en orden para desbloquear el siguiente.</p>
+  <div id="levelList"></div>
+  <button class="btn-ghost" onclick="showScreen('home')">Volver</button>
+</div>
+
+<div id="how" class="screen">
+  <div class="topbar"><button class="btn btn-dark" onclick="showScreen('home')">← Inicio</button><span>Ayuda</span></div>
+  <div class="how"><b style="color:#ffd700">🎯 Objetivo:</b> Recoge 5 pistas 🔍 + 3 llaves 🔑 y llega a la puerta 🚪.<br><br><b>🕹️ Celular:</b> Joystick izquierdo + botones CORRER, ESCONDERSE, LINTERNA.<br><b>⌨️ Compu:</b> WASD / flechas, Shift correr, E esconderse, F linterna, P pausa.<br><br><b>👹 Devorador:</b> Si te ve, te persigue. Escóndete en lo verde.<br><b>🔦 Linterna:</b> Apágala si está cerca, te ve menos.<br><b>❤️ Vidas:</b> 3 vidas. Si te atrapa, pierdes 1.<br><b>🕵️ Final:</b> Adivina quién era el impostor para ganar estrella.</div>
+  <button class="btn-gold" onclick="showLevels()">Entendido, ¡a jugar!</button>
+</div>
+
+<div id="gameScreen" class="screen">
+  <div id="hud"><span id="hudLevel">🏚️ Mansión</span><span>❤️ <b id="hudLives">3</b></span><span>🔍 <b id="hudClues">0/5</b></span><span>🔑 <b id="hudKeys">0/3</b></span><span>⏱️ <b id="hudTime">00:00</b></span><span>⚡ <b id="hudStam">100</b></span><button class="btn btn-dark" style="margin-left:auto;padding:6px 10px" onclick="togglePause()">⏸️</button></div>
+  <div class="progress"><i id="progBar"></i></div>
+  <div id="canvasWrap"><div id="alert">👹 ¡TE VIO! ¡CORRE O ESCÓNDETE!</div><div id="phaser"></div><div id="msg"><div id="msgBox"></div></div></div>
+  <div class="controls"><div id="joy"><div id="knob">🎮</div></div><div class="cbtns"><button class="cbtn dark" id="btnHide">🙈<br>ESCONDER</button><button class="cbtn" id="btnLight">🔦<br>LUZ</button><button class="cbtn pink" id="btnRun">🏃<br>CORRER</button></div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

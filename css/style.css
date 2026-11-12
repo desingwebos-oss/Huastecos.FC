@@ -1,0 +1,74 @@
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#150826;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100dvh}
+.screen{display:none;min-height:100dvh;flex-direction:column;padding:16px;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.screen.active{display:flex}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:4px 2px}
+.logo{font-size:11px;letter-spacing:2px;font-weight:800;color:#fff}
+.logo b{color:#ff9ad5}
+.iconbtn{background:#2a1550;border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px}
+/* HOME estilo captura */
+.hero-card{background:linear-gradient(135deg,#3b1a6b,#6b2fb3 60%,#2a1550);border-radius:22px;padding:20px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.hero-card:before{content:"✦";position:absolute;right:18px;top:14px;color:#ffd700;font-size:22px}
+.hero-card:after{content:"✦";position:absolute;left:12px;bottom:12px;color:rgba(255,255,255,.25);font-size:18px}
+.pill{display:inline-block;background:#ff5aa8;color:#fff;font-size:10px;font-weight:800;letter-spacing:1px;padding:6px 10px;border-radius:999px}
+.hero-flex{display:flex;gap:14px;align-items:center}
+.hero-text{flex:1}
+.hero-text h1{font-size:38px;line-height:.92;margin:10px 0 8px;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.hero-text h1 span{color:#ff9ad5}
+.hero-text p{font-size:12.5px;line-height:1.5;color:#e6d9ff}
+.hero-img{width:132px;flex-shrink:0;text-align:center;position:relative}
+.girl{width:118px;height:128px;margin:0 auto;background:linear-gradient(180deg,#ffd700,#ff9ad5);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:78px;position:relative;box-shadow:0 8px 20px rgba(0,0,0,.3);border:3px solid #fff}
+.girl:after{content:"";position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:36px}
+.yo-puedo{display:inline-block;background:#ffd700;color:#1a0b2e;font-size:11px;font-weight:800;padding:6px 10px;border-radius:999px;margin-top:6px;transform:rotate(-3deg)}
+.resolve{position:absolute;top:68px;right:10px;color:#ffd700;font-weight:800;font-size:12px}
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{border:none;padding:12px 16px;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer}
+.btn-play{background:#ff2e88;color:#fff}
+.btn-white{background:#fff;color:#1a0b2e}
+.btn-dark{background:#1a0b2e;color:#fff;border:1px solid rgba(255,255,255,.25)}
+.stats{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;font-size:11px;font-weight:700}
+.stats span{background:rgba(0,0,0,.35);padding:6px 10px;border-radius:999px}
+.prog{font-size:11px;color:#cbb8ff;margin-top:8px}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+@media(max-width:600px){.cards{grid-template-columns:1fr}.hero-flex{flex-direction:column;text-align:center}.hero-text h1{font-size:34px}.hero-img{order:-1}}
+.card{background:#22103d;border:1px solid #3a2360;border-radius:16px;padding:14px}
+.card .e{font-size:22px}
+.card b{font-size:13px;display:block;margin:6px 0 4px}
+.card p{font-size:11.5px;line-height:1.5;color:#cbb8ff}
+/* niveles */
+.level-card{background:#2a1550;border:2px solid #5b3a9e;border-radius:18px;padding:14px;margin:10px 0;display:flex;gap:12px;align-items:center}
+.level-card.locked{opacity:.55}
+.level-card .big{font-size:36px}
+.btn-gold{background:#ffd700;color:#1a0b2e;padding:12px 16px;border-radius:14px;font-weight:800;border:none;width:100%;margin-top:6px}
+.btn-ghost{background:#2a1550;color:#fff;border:1px solid #5b3a9e;padding:12px;border-radius:14px;width:100%;margin-top:6px}
+.how{background:#2a1550;border-radius:16px;padding:16px;font-size:13px;line-height:1.7}
+/* juego */
+#gameScreen{padding:0;background:#000}
+#hud{display:flex;gap:6px;align-items:center;padding:8px 10px;background:#150826;flex-wrap:wrap;font-size:12px;font-weight:700}
+#hud span{background:#2a1550;padding:5px 8px;border-radius:999px}
+#hud .danger{background:#ff2e88}
+#canvasWrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;min-height:320px}
+canvas{max-width:100%;max-height:100%;display:block}
+#alert{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#ff2e88;padding:8px 14px;border-radius:999px;font-weight:800;display:none;z-index:5;font-size:13px}
+#msg{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);z-index:10;padding:20px}
+#msg.show{display:flex}
+#msgBox{background:#2a1550;border:2px solid #ff9ad5;border-radius:20px;padding:20px;max-width:360px;width:100%;text-align:center}
+#msgBox h2{font-size:24px;margin-bottom:8px}
+#msgBox p{font-size:14px;line-height:1.5;color:#e6d9ff;margin-bottom:12px}
+.suspects{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.suspect{background:#fff;color:#1a0b2e;border:none;padding:12px;border-radius:14px;font-weight:800;cursor:pointer}
+.controls{display:flex;justify-content:space-between;align-items:flex-end;padding:10px;background:#150826;gap:10px}
+#joy{width:110px;height:110px;border-radius:50%;background:#2a1550;border:2px solid #5b3a9e;position:relative;touch-action:none}
+#knob{width:48px;height:48px;border-radius:50%;background:#ff2e88;position:absolute;left:31px;top:31px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.cbtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.cbtn{background:#ffd700;color:#1a0b2e;border:none;width:58px;height:58px;border-radius:50%;font-weight:800;font-size:11px;line-height:1.1}
+.cbtn.pink{background:#ff2e88;color:#fff}
+.cbtn.dark{background:#5b3a9e;color:#fff}
+.progress{height:8px;background:#2a1550;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#ff2e88,#ffd700);width:0%}
+.small{font-size:12px;color:#cbb8ff}
+#phaser{position:absolute;inset:0}
+#phaser canvas{touch-action:none}
+.hero-card .girl img{animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-6px)}}
+.level-card{transition:transform .15s}.level-card:active{transform:scale(.98)}

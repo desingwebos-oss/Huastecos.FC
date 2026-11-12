@@ -1,0 +1,16 @@
+{
+  "name": "Helena Cazadora de Misterios",
+  "short_name": "Helena",
+  "description": "Juego kawaii de misterio y escape para niños.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#150826",
+  "theme_color": "#150826",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

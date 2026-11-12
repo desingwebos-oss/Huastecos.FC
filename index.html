@@ -9,26 +9,25 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Helena Cazadora de Misterios</title>
+<title>Helena Cazadora de Misterios - Primera Persona 3D</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
 <div id="home" class="screen active">
   <div class="topbar"><div class="logo">🔦 HELENA <b>• MISTERIOS</b></div><button class="iconbtn" onclick="toggleMute()">🔊</button></div>
   <div class="hero-card">
-    <span class="pill">★ NIÑA DETECTIVE • GUERRERA K-POP</span>
+    <span class="pill">★ PRIMERA PERSONA 3D • ESCENARIOS REALES</span>
     <div class="hero-flex">
       <div class="hero-text">
         <h1>HELENA<br><span>CAZADORA</span><br>DE MISTERIOS</h1>
-        <p>Gorra al revés, linterna en mano y mucho valor. Resuelve cada escenario, escapa del Devorador de Sombras y descubre quién era el impostor.</p>
+        <p>Ahora en primera persona como Call of Duty. Entra desde afuera del castillo hasta adentro, recorre salones reales, con tu linterna. Resuelve cada escenario, escapa del Devorador y descubre al impostor.</p>
         <div class="btn-row">
           <button class="btn btn-play" onclick="showLevels()">▶ JUGAR</button>
           <button class="btn btn-white" onclick="showLevels()">🗺️ NIVELES</button>
           <button class="btn btn-dark" onclick="showScreen('how')">ⓘ CÓMO JUGAR</button>
         </div>
         <div class="stats"><span>⭐ <b id="totalStars">0 / 12</b> estrellas</span><span>🗺️ Nivel desbloqueado: <b id="lvlUnlocked">1 de 4</b></span><span>👹 4 misterios</span></div>
-        <div class="prog">Progreso listo para guardarse.</div>
+        <div class="prog">Primera persona 3D • PWA instalable • Funciona sin internet</div>
       </div>
       <div class="hero-img">
         <div class="resolve">✦ ¡A resolver! ✦</div>
@@ -38,25 +37,37 @@
     </div>
   </div>
   <div class="cards">
-    <div class="card"><div class="e">🔍</div><b>Busca 5 pistas + 3 llaves</b><p>Explora cada rincón con tu linterna. Cuando tengas todo, corre a la puerta de escape.</p></div>
-    <div class="card"><div class="e">👻</div><b>Escóndete del Devorador</b><p>Si te ve, su barra de alerta sube. Usa armarios, arbustos y pupitres con brillo dorado.</p></div>
-    <div class="card"><div class="e">🔦</div><b>Gana estrellas K-pop</b><p>Escapa con tus 3 vidas y rápido para ganar 3 estrellas. Luego, adivina al impostor.</p></div>
+    <div class="card"><div class="e">🔍</div><b>Busca 5 pistas + 3 llaves</b><p>Explora en primera persona con tu linterna. Cuando tengas todo, corre a la puerta de escape.</p></div>
+    <div class="card"><div class="e">👻</div><b>Escóndete del Devorador</b><p>Si te ve, su alerta sube. Usa armarios, arbustos y pupitres con brillo dorado.</p></div>
+    <div class="card"><div class="e">🏰</div><b>De afuera a adentro</b><p>Castillo por fuera, luego adentro. Escuela con salones reales como la foto.</p></div>
   </div>
-  <p class="small" style="text-align:center;margin-top:12px">PWA instalable • Funciona sin internet • Sin chat • Para niños</p>
+  <p class="small" style="text-align:center;margin-top:12px">PWA instalable • Funciona sin internet • Sin chat • Para niños • v5 Final</p>
 </div>
 
 <div id="levels" class="screen">
   <div class="topbar"><button class="btn btn-dark" onclick="showScreen('home')">← Inicio</button><span>Elige tu misterio</span></div>
   <h2 style="margin:14px 0 4px">🗺️ Elige escenario</h2>
-  <p class="small">Completa en orden para desbloquear el siguiente.</p>
+  <p class="small">Completa en orden para desbloquear el siguiente. Cada nivel empieza afuera y entras adentro.</p>
   <div id="levelList"></div>
   <button class="btn-ghost" onclick="showScreen('home')">Volver</button>
 </div>
 
 <div id="how" class="screen">
   <div class="topbar"><button class="btn btn-dark" onclick="showScreen('home')">← Inicio</button><span>Ayuda</span></div>
-  <div class="how"><b style="color:#ffd700">🎯 Objetivo:</b> Recoge 5 pistas 🔍 + 3 llaves 🔑 y llega a la puerta 🚪.<br><br><b>🕹️ Celular:</b> Joystick izquierdo + botones CORRER, ESCONDERSE, LINTERNA.<br><b>⌨️ Compu:</b> WASD / flechas, Shift correr, E esconderse, F linterna, P pausa.<br><br><b>👹 Devorador:</b> Si te ve, te persigue. Escóndete en lo verde.<br><b>🔦 Linterna:</b> Apágala si está cerca, te ve menos.<br><b>❤️ Vidas:</b> 3 vidas. Si te atrapa, pierdes 1.<br><b>🕵️ Final:</b> Adivina quién era el impostor para ganar estrella.</div>
+  <div class="how"><b style="color:#ffd700">🎯 Objetivo:</b> Recoge 5 pistas 🔍 + 3 llaves 🔑 y llega a la puerta 🚪.<br><br><b>🕹️ Celular (Primera Persona):</b> Joystick izquierdo = moverte. Arrastra lado derecho = mirar / girar. Botones CORRER, ESCONDERSE, LINTERNA.<br><b>⌨️ Compu:</b> WASD / flechas mover, mouse arrastrado o flechas girar, Shift correr, E esconderse, F linterna, P pausa.<br><br><b>🏰 Castillo:</b> Empiezas afuera, picas ENTRAR y entras adentro.<br><b>🏫 Escuela:</b> Salones reales con pupitres, ventanas y polvo.<br><b>👹 Devorador:</b> Si te ve, te persigue. Escóndete en lo verde.<br><b>❤️ Vidas:</b> 3 vidas.<br><b>🕵️ Final:</b> Adivina quién era el impostor para ganar estrella.</div>
   <button class="btn-gold" onclick="showLevels()">Entendido, ¡a jugar!</button>
+</div>
+
+<div id="introLevel" class="screen" style="padding:0">
+  <div style="flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column">
+    <img id="introImg" src="" style="width:100%;height:58%;object-fit:cover;display:block">
+    <div style="flex:1;background:#150826;padding:18px">
+      <h2 id="introTitle" style="margin:0 0 8px">Mansión</h2>
+      <p id="introText" style="font-size:14px;line-height:1.5;color:#e6d9ff"></p>
+      <button class="btn-gold" onclick="enterLevel()">➡️ ENTRAR AL ESCENARIO</button>
+      <button class="btn-ghost" onclick="showLevels()">← Volver a niveles</button>
+    </div>
+  </div>
 </div>
 
 <div id="gameScreen" class="screen">
@@ -64,8 +75,8 @@
   <div class="progress"><i id="progBar"></i></div>
   <div id="canvasWrap"><div id="alert">👹 ¡TE VIO! ¡CORRE O ESCÓNDETE!</div><div id="phaser"></div><div id="msg"><div id="msgBox"></div></div></div>
   <div class="controls"><div id="joy"><div id="knob">🎮</div></div><div class="cbtns"><button class="cbtn dark" id="btnHide">🙈<br>ESCONDER</button><button class="cbtn" id="btnLight">🔦<br>LUZ</button><button class="cbtn pink" id="btnRun">🏃<br>CORRER</button></div></div>
+  <p style="text-align:center;font-size:11px;color:#cbb8ff;padding:4px">Arrastra lado derecho para mirar • Joystick para moverte</p>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/game.js"></script>
 <script src="js/main.js"></script>

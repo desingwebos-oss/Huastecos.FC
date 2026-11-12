@@ -83,6 +83,9 @@ body{font-family:'Inter',sans-serif;background:#070f24;color:#eaf1ff;min-height:
 .tabla-stats td:nth-child(2){text-align:left;padding-left:12px;font-weight:600;white-space:normal;word-break:break-word;line-height:1.2}
 .tabla-stats tr:hover td{background:#0f1d3a}
 
+.toast{position:fixed;left:50%;bottom:calc(20px + var(--sab));transform:translateX(-50%) translateY(20px);background:#0f1d3a;color:#eaf1ff;border:1px solid #D4AF37;border-radius:12px;padding:10px 16px;font-size:12px;font-weight:700;z-index:300;opacity:0;pointer-events:none;transition:.25s;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{border-color:#ef4444;color:#fecaca}
 @media (max-width:768px){
   .stats-bar{grid-template-columns:repeat(2,1fr);top:calc(58px + var(--sat))}
   .tabs{top:calc(132px + var(--sat))}
@@ -106,7 +109,7 @@ body{font-family:'Inter',sans-serif;background:#070f24;color:#eaf1ff;min-height:
 <img src="logo.png" class="logo-img" alt="Huastecos FC">
 <div class="title-block"><h1>HUASTECOS FC</h1><p>Dejate de puterias • Temporada 2026</p></div>
 </div>
-<button class="btn btn-gold" style="padding:8px 12px;min-height:36px" onclick="openModal('addPlayer')">➕ Jugador</button>
+<div style="display:flex;gap:6px;align-items:center"><button class="btn btn-ghost" id="btnAdmin" style="padding:8px 12px;min-height:36px" onclick="openModal('admin')">🔒</button><button class="btn btn-gold" style="padding:8px 12px;min-height:36px" onclick="openModal('addPlayer')">➕ Jugador</button></div>
 </div>
 </div>
 
@@ -156,6 +159,7 @@ body{font-family:'Inter',sans-serif;background:#070f24;color:#eaf1ff;min-height:
 </div>
 </div>
 
+<div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
 <div class="modal" id="modalBox">
 <div class="modal-header"><div class="modal-title" id="modalTitle">Huastecos FC</div><button class="modal-close" onclick="closeModal()">✕</button></div>
@@ -180,24 +184,73 @@ function save(){
   localStorage.setItem('huastecos_pagos',JSON.stringify(pagos));
   syncToSheets();
 }
-async function syncToSheets(){
-  if(!SHEETS_API_URL) return;
-  try{ await fetch(SHEETS_API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'syncAll', jugadores, partidos, pagos})}); }catch(e){}
+
+// ===== Seguridad =====
+const ADMIN_LS='huastecos_admin_key';
+let adminKey = localStorage.getItem(ADMIN_LS)||'';
+function isAdmin(){ return !!adminKey; }
+function esc(v){ return String(v??'').replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c])); }
+function cleanId(v){ return String(v??'').replace(/[^\w-]/g,''); }
+function cleanPos(v){ v=String(v??''); return /^[A-Z]{3}(-[A-Z]{3}(-[A-Z])?)?$/.test(v)?v:'MED'; }
+function updateAdminBtn(){ const b=document.getElementById('btnAdmin'); if(b) b.textContent = isAdmin()?'🔓':'🔒'; }
+let toastT;
+function toast(msg, ok=true){
+  const t=document.getElementById('toast'); if(!t) return;
+  t.textContent=msg; t.classList.toggle('err',!ok); t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3500);
 }
+// Envía al Apps Script. Si el navegador permite leer la respuesta, confirma; si no, cae a modo "sin confirmación".
+async function postSheets(payload){
+  const body = JSON.stringify({...payload, key: adminKey});
+  try{
+    const res = await fetch(SHEETS_API_URL,{method:'POST', body});
+    return await res.json();
+  }catch(e){
+    try{ await fetch(SHEETS_API_URL,{method:'POST',mode:'no-cors',body}); return {status:'sin-confirmacion'}; }
+    catch(e2){ return {status:'offline'}; }
+  }
+}
+function cerrarAdmin(){ adminKey=''; localStorage.removeItem(ADMIN_LS); updateAdminBtn(); }
+async function syncToSheets(){
+  if(!SHEETS_API_URL || !adminKey) return;
+  const r = await postSheets({action:'syncAll', jugadores, partidos, pagos});
+  if(r.status==='ok') toast('✅ Guardado en la nube');
+  else if(r.status==='sin-confirmacion') toast('Enviado a la nube (sin confirmación)');
+  else if(r.status==='offline') toast('📴 Sin conexión: guardado solo en este teléfono', false);
+  else if(r.code==='AUTH'){ cerrarAdmin(); toast('🔒 Clave incorrecta. Vuelve a entrar como administrador.', false); }
+  else toast('⚠️ '+(r.error||'No se pudo guardar'), false);
+}
+async function loginAdmin(){
+  const k=document.getElementById('m_adminKey').value;
+  if(!k){ toast('Escribe la clave', false); return; }
+  adminKey=k;
+  const r = await postSheets({action:'ping'});
+  if(r.status==='ok'||r.status==='sin-confirmacion'){
+    localStorage.setItem(ADMIN_LS,adminKey); updateAdminBtn(); closeModal();
+    toast(r.status==='ok'?'🔓 Modo administrador activo':'🔓 Clave guardada (se validará al guardar)');
+  } else {
+    adminKey=''; updateAdminBtn();
+    toast(r.code==='AUTH'?'Clave incorrecta':(r.error||'No se pudo validar'), false);
+  }
+}
+const ACCIONES_ADMIN=['addPlayer','addPago','addMatch','partidoStats'];
+function borrarJugador(id){ if(!isAdmin()){ openModal('admin','necesita'); return; } if(!confirm('¿Eliminar este jugador?')) return; jugadores=jugadores.filter(x=>String(x.id)!==String(id)); save(); renderAll(); }
+function borrarPago(id){ if(!isAdmin()){ openModal('admin','necesita'); return; } if(!confirm('¿Eliminar este pago?')) return; pagos=pagos.filter(x=>String(x.id)!==String(id)); save(); renderAll(); }
+
 async function loadFromSheets(){
   if(!SHEETS_API_URL) return;
   try{
     const res = await fetch(SHEETS_API_URL);
     const data = await res.json();
     if(data.jugadores && Array.isArray(data.jugadores) && data.jugadores.length>0){
-      jugadores = data.jugadores.map(j=>({id: String(j.id), nombre: j.nombre, dorsal: j.dorsal, pos: j.pos}));
+      jugadores = data.jugadores.map(j=>({id: cleanId(j.id), nombre: String(j.nombre??''), dorsal: String(j.dorsal??''), pos: cleanPos(j.pos)}));
       partidos = (data.partidos||[]).map(p=>{
         let acts = p.actuaciones;
         if(typeof acts === 'string'){ try{ acts = JSON.parse(acts); }catch{ acts = []; } }
         if(!Array.isArray(acts)) acts = [];
-        return {id: String(p.id), fecha: cleanFecha(p.fecha), rival: p.rival, gf: Number(p.gf||0), gc: Number(p.gc||0), puntos: Number(p.puntos||0), resultado: p.resultado||'', actuaciones: acts};
+        return {id: cleanId(p.id), fecha: cleanFecha(p.fecha), rival: String(p.rival??''), gf: Number(p.gf||0), gc: Number(p.gc||0), puntos: Number(p.puntos||0), resultado: p.resultado||'', actuaciones: acts.map(a=>({...a, jugadorId: cleanId(a.jugadorId)}))};
       });
-      pagos = (data.pagos||[]).map(p=>({id: String(p.id), jugadorId: String(p.jugadorId), cantidad: Number(p.cantidad||0), monto: p.monto, fecha: cleanFecha(p.fecha)}));
+      pagos = (data.pagos||[]).map(p=>({id: cleanId(p.id), jugadorId: cleanId(p.jugadorId), cantidad: Number(p.cantidad||0), monto: p.monto, fecha: cleanFecha(p.fecha)}));
       localStorage.setItem('huastecos_jugadores_v2',JSON.stringify(jugadores));
       localStorage.setItem('huastecos_partidos_v2',JSON.stringify(partidos));
       localStorage.setItem('huastecos_pagos',JSON.stringify(pagos));
@@ -224,10 +277,19 @@ function openModal(type, data=null){
   const title=document.getElementById('modalTitle');
   const body=document.getElementById('modalBody');
   let html='';
-  if(type==='addPlayer'){
+  if(ACCIONES_ADMIN.includes(type) && !isAdmin()){ type='admin'; data='necesita'; }
+  if(type==='admin'){
+    title.textContent = isAdmin() ? 'Administrador' : 'Acceso de administrador';
+    html = isAdmin()
+      ? `<div style="text-align:center;padding:8px"><div style="font-size:44px">🔓</div><div style="font-weight:800;margin:8px 0">Modo administrador activo</div><div class="help-box">Puedes agregar jugadores, partidos y pagos. Los cambios se guardan en la nube.</div><button class="btn btn-ghost" style="width:100%" onclick="cerrarAdmin();closeModal();toast('Sesión de administrador cerrada')">Cerrar sesión de administrador</button></div>`
+      : `<div class="help-box">🔒 ${data==='necesita'?'Esta acción requiere la <b>clave de administrador</b>.':'Ingresa la clave para poder editar.'} Sin clave solo puedes consultar.</div>
+         <div class="form-group"><label>Clave</label><input id="m_adminKey" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+         <button class="btn btn-gold" style="width:100%" onclick="loginAdmin()">Entrar</button>`;
+  }
+  else if(type==='addPlayer'){
     title.textContent='Agregar Jugador';
     html=`<div class="help-box">💡 Escribe nombre y apellido completo, su número y elige su posición.</div>
-    <div class="form-group"><label>Nombre y apellido</label><input id="m_jNombre" placeholder="Ej: Carlos López García"></div>
+    <div class="form-group"><label>Nombre y apellido</label><input id="m_jNombre" maxlength="60" placeholder="Ej: Carlos López García"></div>
     <div class="form-group"><label>Número de playera</label><input id="m_jDorsal" type="number" inputmode="numeric" placeholder="10"></div>
     <div class="form-group"><label>Posición</label>
     <select id="m_jPos" style="border:2px solid #D4AF37;padding:14px;font-size:16px">
@@ -246,7 +308,7 @@ function openModal(type, data=null){
     <button class="btn btn-gold" style="width:100%;margin-top:10px" onclick="confirmAddPlayer()">✅ Agregar al Equipo</button>`;
   }
   else if(type==='addPago'){
-    const opts=jugadores.map(j=>`<option value="${j.id}">#${j.dorsal} ${j.nombre} (${j.pos})</option>`).join('');
+    const opts=jugadores.map(j=>`<option value="${j.id}">#${esc(j.dorsal)} ${esc(j.nombre)} (${esc(j.pos)})</option>`).join('');
     title.textContent='Registrar Pago';
     html=`<div class="help-box">💡 Cada pago cubre 4 domingos. La bolita se pondrá verde.</div>
     <div class="form-group"><label>¿Quién pagó?</label><select id="m_pJugador">${opts||'<option>Primero agrega jugadores</option>'}</select></div>
@@ -262,7 +324,7 @@ function openModal(type, data=null){
     html=`<div class="help-box">💡 Registra el partido del domingo y después anota los goles.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     <div class="form-group"><label>Fecha del domingo</label><input type="date" id="m_mFecha" value="2026-10-18"></div>
-    <div class="form-group"><label>Rival</label><input id="m_mRival" placeholder="Halcones FC"></div>
+    <div class="form-group"><label>Rival</label><input id="m_mRival" maxlength="40" placeholder="Halcones FC"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     <div class="form-group"><label>Goles Huastecos</label><input type="number" id="m_mGF" value="0" inputmode="numeric"></div>
@@ -274,13 +336,13 @@ function openModal(type, data=null){
     const j=jugadores.find(x=>String(x.id)===String(data.jugadorId));
     const d=new Date(data.fecha);
     const pagado=data.pagado;
-    title.textContent=`#${j.dorsal} ${j.nombre} - ${fmtLong(d)}`;
+    title.textContent=`#${esc(j.dorsal)} ${esc(j.nombre)} - ${fmtLong(d)}`;
     html=`<div style="text-align:center;padding:10px">
     <div style="font-size:48px;margin:10px 0">${pagado?'🟢':'🔴'}</div>
     <div style="font-weight:800;font-size:16px">${pagado?'Pagado':'Pendiente'}</div>
     <div style="font-size:12px;color:#8fb0f0;margin-top:6px">Jornada ${data.jornada} • ${fmtLong(d)}</div>
     <div style="margin-top:12px;background:#070f24;border:1px solid #1e3a7a;border-radius:10px;padding:10px">
-    <div style="font-size:11px">Jugador: #${j.dorsal} ${j.nombre}<br>Posición: ${j.pos}<br>Total pagado: ${calcularEstado(j.id).total} domingos</div>
+    <div style="font-size:11px">Jugador: #${esc(j.dorsal)} ${esc(j.nombre)}<br>Posición: ${esc(j.pos)}<br>Total pagado: ${calcularEstado(j.id).total} domingos</div>
     </div>
     ${!pagado?`<button class="btn btn-gold" style="width:100%;margin-top:12px" onclick="openModal('addPago')">💰 Registrar Pago</button>`:''}
     </div>`;
@@ -294,7 +356,7 @@ function openModal(type, data=null){
       const act = (partido.actuaciones||[]).find(a=>String(a.jugadorId)===String(j.id)) || {jugado:0,goles:0,asist:0,amarillas:0,rojas:0};
       const jugadoChecked = act.jugado || act.goles>0 || act.asist>0 ? 'checked' : '';
       html+=`<div class="goles-row">
-        <div class="jug-info"><span class="num-badge">#${j.dorsal}</span> ${j.nombre}</div>
+        <div class="jug-info"><span class="num-badge">#${esc(j.dorsal)}</span> ${esc(j.nombre)}</div>
         <input type="checkbox" id="j_${j.id}" ${jugadoChecked}>
         <input type="number" id="g_${j.id}" value="${act.goles||0}" min="0" max="9" inputmode="numeric">
         <input type="number" id="a_${j.id}" value="${act.asist||0}" min="0" max="9" inputmode="numeric">
@@ -307,11 +369,11 @@ function openModal(type, data=null){
   else if(type==='jugadorStats'){
     const j=jugadores.find(x=>String(x.id)===String(data));
     const s=calcularStatsJugador(j.id);
-    title.textContent=`#${j.dorsal} ${j.nombre}`;
+    title.textContent=`#${esc(j.dorsal)} ${esc(j.nombre)}`;
     html=`<div style="text-align:center;margin-bottom:12px">
-    <div style="width:70px;height:70px;background:#0f1d3a;border:2px solid #D4AF37;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;margin:0 auto 8px">#${j.dorsal}</div>
-    <div style="font-weight:800;font-size:14px">#${j.dorsal} ${j.nombre}</div>
-    <div style="font-size:11px;color:#8fb0f0">${j.pos}</div>
+    <div style="width:70px;height:70px;background:#0f1d3a;border:2px solid #D4AF37;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;margin:0 auto 8px">#${esc(j.dorsal)}</div>
+    <div style="font-weight:800;font-size:14px">#${esc(j.dorsal)} ${esc(j.nombre)}</div>
+    <div style="font-size:11px;color:#8fb0f0">${esc(j.pos)}</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
     <div style="background:#070f24;border:1px solid #1e3a7a;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#D4AF37">${s.pj}</div><div style="font-size:9px;color:#8fb0f0">JUGADOS</div></div>
@@ -354,7 +416,7 @@ function renderMatriz(){
       const pagado=total >= idx+1;
       cells+=`<td onclick="openModal('celdaPago',{jugadorId:'${j.id}',fecha:'${d.toISOString()}',pagado:${pagado},jornada:${idx+1}})"><span class="dot ${pagado?'green':'red'}"></span></td>`;
     });
-    rows+=`<tr><td onclick="openModal('jugadorStats','${j.id}')"><span class="num-badge">#${j.dorsal}</span> ${j.nombre}</td>${cells}<td><b style="color:${total>0?'#4ade80':'#f87171'}">${total}</b></td></tr>`;
+    rows+=`<tr><td onclick="openModal('jugadorStats','${j.id}')"><span class="num-badge">#${esc(j.dorsal)}</span> ${esc(j.nombre)}</td>${cells}<td><b style="color:${total>0?'#4ade80':'#f87171'}">${total}</b></td></tr>`;
   });
   if(!jugadores.length) rows='<tr><td colspan="100%" style="padding:20px;text-align:center;color:#8fb0f0">💡 Toca Agregar Jugador para empezar</td></tr>';
   document.getElementById('matrizWrap').innerHTML=`<table class="matrix-table">${header}<tbody>${rows}</tbody></table>`;
@@ -364,7 +426,7 @@ function renderPagos(){
   if(!pagos.length){c.innerHTML='<div style="color:#8fb0f0;font-size:11px">💡 Aún no hay pagos.</div>';return;}
   c.innerHTML=[...pagos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,15).map(p=>{
     const j=jugadores.find(x=>String(x.id)===String(p.jugadorId));
-    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #122a5a;font-size:11px"><span><span class="num-badge">#${j?.dorsal||'?'}</span><b>${j?.nombre||'?'}</b> • ${p.cantidad} domingos • ${cleanFecha(p.fecha)}</span><button onclick="pagos=pagos.filter(x=>String(x.id)!=='${p.id}');save();renderAll()" style="background:#4a0f0f;color:#fca5a5;border:none;border-radius:6px;padding:4px 8px">x</button></div>`;
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #122a5a;font-size:11px"><span><span class="num-badge">#${esc(j?.dorsal||'?')}</span><b>${esc(j?.nombre||'?')}</b> • ${p.cantidad} domingos • ${cleanFecha(p.fecha)}</span><button onclick="borrarPago('${p.id}')" style="background:#4a0f0f;color:#fca5a5;border:none;border-radius:6px;padding:4px 8px">x</button></div>`;
   }).join('');
 }
 function renderMatches(){
@@ -372,7 +434,7 @@ function renderMatches(){
     const totalGoles = (p.actuaciones||[]).reduce((s,a)=>s+(Number(a.goles)||0),0);
     const jugados = (p.actuaciones||[]).filter(a=>a.jugado).length;
     return `<div style="padding:10px 0;border-bottom:1px solid #122a5a">
-      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px">${cleanFecha(p.fecha)} vs ${p.rival} <b>${p.gf}-${p.gc}</b> • ${jugados} jugaron • ⚽ ${totalGoles} goles</span><span style="background:#0f1d3a;padding:4px 8px;border-radius:999px;font-size:10px">${p.puntos} pts</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px">${cleanFecha(p.fecha)} vs ${esc(p.rival)} <b>${p.gf}-${p.gc}</b> • ${jugados} jugaron • ⚽ ${totalGoles} goles</span><span style="background:#0f1d3a;padding:4px 8px;border-radius:999px;font-size:10px">${p.puntos} pts</span></div>
       <div style="margin-top:6px"><button class="btn btn-gold btn-small" onclick="openModal('partidoStats','${p.id}')">✏️ Anotar Goles</button></div>
     </div>`;
   }).join('')||'<div style="color:#8fb0f0;text-align:center;padding:12px">💡 Toca Nuevo Partido</div>';
@@ -380,16 +442,17 @@ function renderMatches(){
 function renderPlayers(){
   document.getElementById('playersList').innerHTML=jugadores.map(j=>{
     const stats = calcularStatsJugador(j.id);
-    return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #122a5a;align-items:center"><div><div style="font-size:12px"><span class="num-badge">#${j.dorsal}</span> ${j.nombre} <span class="pos-badge pos-${j.pos.split('-')[0]}">${j.pos.split('-')[0]}</span></div><div style="font-size:10px;color:#8fb0f0">${stats.pj} partidos jugados • ⚽ ${stats.goles} • 🎯 ${stats.asist}</div></div><button class="btn btn-ghost btn-small" onclick="jugadores=jugadores.filter(x=>String(x.id)!==String('${j.id}'));save();renderAll()">x</button></div>`;
+    return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #122a5a;align-items:center"><div><div style="font-size:12px"><span class="num-badge">#${esc(j.dorsal)}</span> ${esc(j.nombre)} <span class="pos-badge pos-${j.pos.split('-')[0]}">${j.pos.split('-')[0]}</span></div><div style="font-size:10px;color:#8fb0f0">${stats.pj} partidos jugados • ⚽ ${stats.goles} • 🎯 ${stats.asist}</div></div><button class="btn btn-ghost btn-small" onclick="borrarJugador('${j.id}')">x</button></div>`;
   }).join('')||'<div style="color:#8fb0f0">💡 Aún no hay jugadores.</div>';
 }
 function renderTabla(){
   const datos = jugadores.map(j=>{const s=calcularStatsJugador(j.id); return {dorsal:j.dorsal,nombre:j.nombre,pos:j.pos,...s};}).sort((a,b)=>b.goles-a.goles);
-  document.getElementById('tablaBody').innerHTML=datos.map(s=>`<tr><td><span class="num-badge">#${s.dorsal}</span></td><td><b>${s.nombre}</b></td><td><span class="pos-badge pos-${s.pos.split('-')[0]}">${s.pos.split('-')[0]}</span></td><td>${s.pj}</td><td style="font-weight:800;color:#4ade80">${s.goles}</td><td style="color:#60a5fa">${s.asist}</td><td style="color:#fbbf24">${s.amarillas}</td><td style="color:#f87171">${s.rojas}</td></tr>`).join('')||'<tr><td colspan=8 style="text-align:center;padding:20px;color:#8fb0f0">💡 Registra un partido y anota los goles</td></tr>';
+  document.getElementById('tablaBody').innerHTML=datos.map(s=>`<tr><td><span class="num-badge">#${esc(s.dorsal)}</span></td><td><b>${esc(s.nombre)}</b></td><td><span class="pos-badge pos-${s.pos.split('-')[0]}">${s.pos.split('-')[0]}</span></td><td>${s.pj}</td><td style="font-weight:800;color:#4ade80">${s.goles}</td><td style="color:#60a5fa">${s.asist}</td><td style="color:#fbbf24">${s.amarillas}</td><td style="color:#f87171">${s.rojas}</td></tr>`).join('')||'<tr><td colspan=8 style="text-align:center;padding:20px;color:#8fb0f0">💡 Registra un partido y anota los goles</td></tr>';
 }
 function switchTab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.tab===t));['tabla','jugadores','partidos','pagos'].forEach(id=>{document.getElementById('view-'+id).style.display=id===t?'block':'none';});}
 function renderAll(){renderBar();renderMatriz();renderPagos();renderMatches();renderPlayers();renderTabla();}
 renderAll();
+updateAdminBtn();
 loadFromSheets();
 
 // ===== Android (Capacitor): botón atrás =====

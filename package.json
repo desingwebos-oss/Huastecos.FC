@@ -1,7 +1,0 @@
-{
-  "name": "helena-cazadora-de-misterios",
-  "version": "1.0.0",
-  "description": "Juego kawaii de misterio y escape (Phaser 3 + PWA)",
-  "private": true,
-  "scripts": { "start": "npx serve ." }
-}

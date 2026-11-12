@@ -10,7 +10,6 @@
 <meta name="apple-mobile-web-app-title" content="Huastecos FC">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="manifest" href="manifest.json">
-<link rel="manifest" href="manifest.webmanifest">
 <title>Huastecos FC - Index</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
@@ -148,7 +147,7 @@ canvas.draw{position:absolute;inset:0;width:100%;height:100%;z-index:5;touch-act
 </style>
 </head>
 <body>
-<div id="installBanner" style="display:none;background:linear-gradient(135deg,#D4AF37,#b8860b);color:#0a1e4a;padding:10px 14px;font-weight:800;font-size:13px;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200"><span id="installText">📲 Instala Huastecos FC en tu celular</span><span style="display:flex;gap:8px"><button id="installBtn" style="background:#0a1e4a;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800">Instalar</button><button onclick="document.getElementById('installBanner').style.display='none';localStorage.setItem('huastecos_instal_dismiss','1')" style="background:transparent;border:none;font-weight:900;font-size:16px">✕</button></span></div>
+<div id="installBanner" style="display:none;background:linear-gradient(135deg,#D4AF37,#b8860b);color:#0a1e4a;padding:10px 14px;font-weight:800;font-size:13px;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200"><span id="installText">📲 Instala Huastecos FC en tu celular</span><span style="display:flex;gap:8px"><button id="installBtn" style="background:#0a1e4a;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800">Instalar</button><button onclick="document.getElementById('installBanner').style.display='none';localStorage.setItem('huastecos_instal_dismiss',Date.now().toString())" style="background:transparent;border:none;font-weight:900;font-size:16px">✕</button></span></div>
 <div class="header"><div class="header-top"><div class="logo-wrap"><img src="logo.png" class="logo-img" alt="Huastecos FC" onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"><div id="logoFb" class="logo-fallback" style="display:none">HFC</div><div class="title-block"><h1>HUASTECOS FC</h1><p><span class="dot-live"></span> DEJATE DE PUTERIAS • TEMPORADA 2026</p></div></div><div style="display:flex;gap:6px"><button class="btn btn-ghost" id="btnAdmin" style="padding:8px 12px;min-height:38px" onclick="openModal('admin')">🔒</button><button class="btn btn-gold" style="padding:8px 12px;min-height:38px" onclick="openModal('addPlayer')">➕ Jugador</button></div></div></div>
 
 <div class="stats-carousel" id="statsBar"></div>
@@ -340,8 +339,8 @@ let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;mostrarInstalar();});
 function esIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
 function estaInstalado(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
-function mostrarInstalar(){if(estaInstalado())return;if(localStorage.getItem('huastecos_instal_dismiss')==='1')return;let b=document.getElementById('installBanner');if(!b)return;b.style.display='flex';if(esIOS() && !deferredPrompt){document.getElementById('installText').textContent='📲 En iPhone: toca Compartir y luego Agregar a pantalla de inicio';document.getElementById('installBtn').textContent='Cómo hacerlo';}}
-document.getElementById('installBtn')?.addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();let r=await deferredPrompt.userChoice;deferredPrompt=null;if(r && r.outcome==='accepted'){document.getElementById('installBanner').style.display='none';}}else if(esIOS()){alert('En iPhone: toca el botón Compartir (cuadro con flecha arriba) y luego Agregar a pantalla de inicio');}else{mostrarInstalar();}});
+function mostrarInstalar(){if(estaInstalado())return;if(localStorage.getItem('huastecos_instal_dismiss')==='1' && !esIOS()){/* no bloquear para siempre, solo esta vez */} let b=document.getElementById('installBanner');if(!b)return;b.style.display='flex';if(esIOS() && !deferredPrompt){document.getElementById('installText').textContent='📲 En iPhone: toca Compartir y luego Agregar a pantalla de inicio';document.getElementById('installBtn').textContent='Cómo hacerlo';}}
+document.getElementById('installBtn')?.addEventListener('click',async()=>{if(deferredPrompt){deferredPrompt.prompt();let r=await deferredPrompt.userChoice;deferredPrompt=null;if(r && r.outcome==='accepted'){document.getElementById('installBanner').style.display='none';}return;}if(esIOS()){alert('En iPhone: toca el botón Compartir (cuadro con flecha arriba) y luego Agregar a pantalla de inicio');return;}let esPC=/windows|macintosh/i.test(navigator.userAgent);if(esPC){alert('En esta PC: 1) Dale clic al icono de instalar que sale a la derecha de la barra de direcciones (una pantallita con flecha) 2) Si no sale, dale a los 3 puntitos ⋮ > Guardar y compartir > Instalar Huastecos FC. Si no sale nada, es porque el navegador todavía tiene guardada la versión vieja.');}else{alert('En Android: 1) Dale a los 3 puntitos ⋮ de Chrome 2) Agregar a pantalla de inicio / Instalar app. Si no sale, cierra y vuelve a abrir la página 2 veces.');}});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}});}
 setTimeout(()=>{if(!estaInstalado())mostrarInstalar();},2500);
 

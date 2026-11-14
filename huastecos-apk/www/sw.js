@@ -1,4 +1,4 @@
-const CACHE = 'huastecos-v3';
+const CACHE = 'huastecos-v4';
 self.addEventListener('install', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => self.skipWaiting()));
 });

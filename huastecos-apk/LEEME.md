@@ -39,3 +39,11 @@ Apple exige firma. Dos caminos:
   fírmalo/instálalo con **Sideloadly** o **AltStore** usando tu Apple ID gratis (la app caduca cada 7 días).
 - **Cuenta Apple Developer ($99 USD/año):** en un Mac: `npm install && npx cap add ios && npx cap sync ios && npx cap open ios`,
   en Xcode elige tu Team y publica por TestFlight / App Store.
+
+
+---------------------------------------------------------------
+# 🔄 Datos desde Google Sheets (cambios recientes)
+- La app muestra arriba una barra de estado: verde = Sheets conectado (con cuántos jugadores/partidos cargó); roja = error con el motivo. Tócala para recargar.
+- `index.html` está duplicado: raíz (respaldo) y `huastecos-apk/www/` (el que publican la PWA y el APK). Mantén ambos iguales.
+- Cada vez que cambies `Code.gs` en Apps Script: Implementar > Administrar implementaciones > Editar > Nueva versión. La URL /exec no cambia.
+- `Code.gs` NO va en este repo: está en la carpeta APPS_SCRIPT del zip para pegarlo en script.google.com. La clave ADMIN_KEY va en Propiedades de secuencia de comandos, nunca en el código.

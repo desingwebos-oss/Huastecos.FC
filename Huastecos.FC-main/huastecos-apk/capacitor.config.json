@@ -1,0 +1,8 @@
+{
+  "appId": "com.huastecos.fc",
+  "appName": "Huastecos FC",
+  "webDir": "www",
+  "backgroundColor": "#070f24",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false }
+}

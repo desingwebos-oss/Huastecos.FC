@@ -243,7 +243,7 @@ function grupoPos(pos){if(!pos)return '';let s=String(pos).toUpperCase();if(s.st
 function posBadge(pos){let g=grupoPos(pos);return `<span class="pos-badge pos-${esc(g)}">${esc(pos)}</span>`;}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 function esDemoActual(){ return jugadores.length===14 && partidos.length===0 && jugadores[0] && jugadores[0].nombre==='Carlos BA' && jugadores.some(j=>j.nombre==='Chino'); }
-function save(){safeSet('huastecos_jugadores_v2',jugadores);safeSet('huastecos_partidos_v2',partidos);safeSet('huastecos_pagos',pagos);safeSet('huastecos_jugadas',jugadasGuardadas); if(isAdmin() && !esDemoActual()){fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:adminKey,action:'syncAll',jugadores,partidos,pagos,jugadas:jugadasGuardadas})}).then(r=>r.json()).then(d=>{if(d&&d.error){toast('⛔ Servidor rechazó el guardado: '+String(d.error).slice(0,60)); adminVerificado=false; try{sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}}}).catch(()=>{});}}
+function save(){safeSet('huastecos_jugadores_v2',jugadores);safeSet('huastecos_partidos_v2',partidos);safeSet('huastecos_pagos',pagos);safeSet('huastecos_jugadas',jugadasGuardadas); if(isAdmin() && !esDemoActual()){fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:adminKey,action:'syncAll',jugadores,partidos,pagos,jugadas:jugadasGuardadas})}).then(r=>r.json()).then(d=>{if(d&&d.error){toast('⛔ Servidor rechazó el guardado: '+String(d.error).slice(0,60)); if(/autorizado/i.test(String(d.error))){adminVerificado=false; try{sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}}}}).catch(()=>{toast('⚠️ No se pudo guardar en Sheets (sin conexión o URL /exec incorrecta)');});}}
 function statsJugador(id){let pj=0,goles=0,asist=0,am=0,ro=0;partidos.forEach(p=>{let a=(p.actuaciones||[]).find(x=>String(x.jugadorId)===String(id));if(a){pj++;goles+=+a.goles||0;asist+=+a.asist||0;am+=+a.amarillas||0;ro+=+a.rojas||0}});return{pj,goles,asist,am,ro}}
 function renderAll(){let totalGoles=jugadores.reduce((s,j)=>s+statsJugador(j.id).goles,0);let totPuntos=partidos.reduce((s,pp)=>s+((pp.puntos!=null)?(+pp.puntos||0):((+pp.gf>+pp.gc)?3:((+pp.gf===+pp.gc)?1:0))),0);let pctPuntos=partidos.length?Math.round((totPuntos/(partidos.length*3))*100):0;
 document.getElementById('statsBar').innerHTML=[['JUGADORES',jugadores.length,'👥',100],['PARTIDOS',partidos.length,'📅',partidos.length?100:0],['GOLES',totalGoles,'⚽',Math.min(100,totalGoles*10)],['PUNTOS',totPuntos,'🏆',pctPuntos]].map(x=>`<div class="stat-card"><div class="stat-top"><span class="stat-label">${esc(x[0])}</span><span>${esc(x[2])}</span></div><div class="stat-value">${cleanNum(x[1],9999)}</div><div class="stat-bar"><i style="width:${cleanNum(x[3],100)}%"></i></div></div>`).join('');
@@ -356,7 +356,7 @@ function exportJPG(){let pitch=document.getElementById('pitch');let w=900,h=1350
 window.addEventListener('resize',()=>{if(document.getElementById('estrategiaFS').classList.contains('show'))resizeCanvas()});
 document.getElementById('statsBar').addEventListener('scroll',e=>{let idx=Math.round(e.target.scrollLeft/(e.target.scrollWidth/4));document.querySelectorAll('#statsDots i').forEach((d,i)=>d.classList.toggle('on',i===idx))});
 // PARCHE: valida TODO lo que baja de la nube antes de usarlo
-function cleanJugadores(arr){if(!Array.isArray(arr))return null; return arr.slice(0,60).map(j=>{if(!j||typeof j!=='object')return null; const id=cleanId(j.id); if(!id)return null; return {id, nombre:cleanStr(j.nombre,40)||'Jugador', dorsal:String(cleanNum(j.dorsal,99)), pos:grupoPos(j.pos)};}).filter(Boolean);}
+function cleanJugadores(arr){if(!Array.isArray(arr))return null; return arr.slice(0,60).map(j=>{if(!j||typeof j!=='object')return null; const id=cleanId(j.id); if(!id)return null; return {id, nombre:cleanStr(j.nombre,40)||'Jugador', dorsal:String(cleanNum(j.dorsal,99)), pos:grupoPos(j.pos), posDetalle:cleanStr(j.posDetalle||j.pos,20)};}).filter(Boolean);}
 function cleanPartidos(arr){if(!Array.isArray(arr))return []; return arr.slice(0,200).map(p=>{if(!p||typeof p!=='object')return null; return {id:cleanId(p.id)||Date.now().toString(), fecha:cleanStr(p.fecha,10), rival:cleanStr(p.rival,40)||'Rival', gf:cleanNum(p.gf,99), gc:cleanNum(p.gc,99), puntos:cleanNum(p.puntos,999), resultado:'', actuaciones:Array.isArray(p.actuaciones)?p.actuaciones.slice(0,60).map(a=>({jugadorId:cleanId(a.jugadorId), goles:cleanNum(a.goles,99), asist:cleanNum(a.asist,99), amarillas:cleanNum(a.amarillas,99), rojas:cleanNum(a.rojas,99), pj:!!a.pj})).filter(a=>a.jugadorId):[]};}).filter(Boolean);}
 function cleanPagos(arr){if(!Array.isArray(arr))return []; return arr.slice(0,500).map(p=>{if(!p||typeof p!=='object')return null; const id=cleanId(p.jugadorId); if(!id)return null; return {id:cleanId(p.id)||Date.now().toString(), jugadorId:id, cantidad:cleanNum(p.cantidad,20), fecha:cleanStr(p.fecha,10)};}).filter(Boolean);}
 // V3 - FIX: ya no compara solo por cantidad. Compara CONTENIDO.
@@ -365,7 +365,13 @@ let ultimoErrorNube='';
 async function cargarDeNube(forzado){
   try{
     const r = await fetch(SHEETS_API_URL);
-    const d = await r.json();
+    const txt = await r.text();
+    let d;
+    try{ d = JSON.parse(txt); }catch(pe){
+      ultimoErrorNube='La URL /exec no devolvio JSON (implementacion sin acceso "Cualquiera" o sin NUEVA VERSION)';
+      if(forzado) toast('⛔ '+ultimoErrorNube);
+      return false;
+    }
     // sin letreros, solo carga silenciosa
     if(d && d.error){ ultimoErrorNube=d.error; if(forzado) toast('⛔ Nube: '+String(d.error).slice(0,60)); return false; }
     if(!d || !Array.isArray(d.jugadores)){
@@ -380,13 +386,15 @@ async function cargarDeNube(forzado){
     }
     const nj=cleanJugadores(d.jugadores);
     const np=cleanPartidos(d.partidos||[]);
+    // Si la nube no trae actuaciones de un partido, conserva las locales (evita perder goles/asistencias)
+    np.forEach(p=>{ if(!p.actuaciones.length){ const l=partidos.find(x=>String(x.id)===String(p.id)); if(l&&Array.isArray(l.actuaciones)&&l.actuaciones.length) p.actuaciones=l.actuaciones; } });
     const npa=cleanPagos(d.pagos||[]);
     if(!nj.length){ if(forzado) toast('⛔ Nube sin jugadores validos'); return false; }
     // Comparar por CONTENIDO, no por cantidad
     const mismo = JSON.stringify(nj)===JSON.stringify(jugadores) && JSON.stringify(np)===JSON.stringify(partidos);
     if(mismo && !forzado) return true;
     jugadores=nj; partidos=np; pagos=npa;
-    if(Array.isArray(d.jugadas)) jugadasGuardadas=d.jugadas.slice(0,50);
+    if(Array.isArray(d.jugadas) && d.jugadas.length) jugadasGuardadas=d.jugadas.slice(0,50);
     safeSet('huastecos_jugadores_v2',jugadores); safeSet('huastecos_partidos_v2',partidos); safeSet('huastecos_pagos',pagos); safeSet('huastecos_jugadas',jugadasGuardadas);
     renderAll(); try{initPitch();}catch(e){}
     if(forzado) toast('✅ Cargado desde Sheets: '+nj.length+' jugadores, '+np.length+' partidos');

@@ -156,7 +156,7 @@ canvas.draw{position:absolute;inset:0;width:100%;height:100%;z-index:5;touch-act
 <body>
 <div id="installBanner" style="display:none;background:linear-gradient(135deg,#D4AF37,#b8860b);color:#0a1e4a;padding:10px 14px;font-weight:800;font-size:13px;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:200"><span id="installText">📲 Instala Huastecos FC en tu celular</span><span style="display:flex;gap:8px"><button id="installBtn" style="background:#0a1e4a;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800">Instalar</button><button onclick="document.getElementById('installBanner').style.display='none';try{localStorage.setItem('huastecos_instal_dismiss',Date.now().toString())}catch(e){}" style="background:transparent;border:none;font-weight:900;font-size:16px">✕</button></span></div>
 <div class="header"><div class="header-top"><div class="logo-wrap"><img src="logo.png" class="logo-img" alt="Huastecos FC" onerror="this.style.display='none';document.getElementById('logoFb').style.display='flex'"><div id="logoFb" class="logo-fallback" style="display:none">HFC</div><div class="title-block"><h1>HUASTECOS FC</h1><p><span class="dot-live"></span> DEJATE DE PUTERIAS • TEMPORADA 2026</p></div></div><div style="display:flex;gap:6px"><button class="btn btn-ghost" id="btnAdmin" style="padding:8px 12px;min-height:38px" onclick="openModal('admin')">🔒</button><button class="btn btn-gold" style="padding:8px 12px;min-height:38px" onclick="openModal('addPlayer')">➕ Jugador</button></div></div></div>
-<div class="stats-carousel" id="statsBar"></div>
+<div style="display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap"><button class="btn btn-blue btn-small" onclick="forzarRecargaNube()">🔄 Cargar desde Sheets</button><button class="btn btn-ghost btn-small" onclick="borrarDemoYCargar()">🧹 Borrar demo y cargar Sheets</button><button class="btn btn-ghost btn-small" onclick="probarClave()">🔑 Probar si el servidor si valida</button></div><div class="stats-carousel" id="statsBar"></div>
 <div class="dots" id="statsDots"><i class="on"></i><i></i><i></i><i></i></div>
 <div class="container">
 <div id="view-tabla"><div class="card"><h3>Tabla de Goleo y Tarjetas</h3><div class="tabla-wrapper"><table class="tabla-stats"><thead><tr><th>Jugador</th><th>Pos</th><th>PJ</th><th>⚽</th><th>🎯</th><th>🟨</th><th>🟥</th></tr></thead><tbody id="tablaBody"></tbody></table></div></div></div>
@@ -242,7 +242,8 @@ function nombreCorto(n){if(!n)return '';let p=String(n).trim().split(/\s+/);if(p
 function grupoPos(pos){if(!pos)return '';let s=String(pos).toUpperCase();if(s.startsWith('POR'))return 'POR';if(s.startsWith('DEF'))return 'DEF';if(s.startsWith('MED'))return 'MED';if(s.startsWith('DEL'))return 'DEL';return 'DEF';}
 function posBadge(pos){let g=grupoPos(pos);return `<span class="pos-badge pos-${esc(g)}">${esc(pos)}</span>`;}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
-function save(){safeSet('huastecos_jugadores_v2',jugadores);safeSet('huastecos_partidos_v2',partidos);safeSet('huastecos_pagos',pagos);safeSet('huastecos_jugadas',jugadasGuardadas); if(isAdmin()){fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:adminKey,action:'syncAll',jugadores,partidos,pagos,jugadas:jugadasGuardadas})}).then(r=>r.json()).then(d=>{if(d&&d.error){toast('⛔ Servidor rechazó el guardado: '+String(d.error).slice(0,60)); adminVerificado=false; try{sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}}}).catch(()=>{});}}
+function esDemoActual(){ return jugadores.length===14 && partidos.length===0 && jugadores[0] && jugadores[0].nombre==='Carlos BA' && jugadores.some(j=>j.nombre==='Chino'); }
+function save(){safeSet('huastecos_jugadores_v2',jugadores);safeSet('huastecos_partidos_v2',partidos);safeSet('huastecos_pagos',pagos);safeSet('huastecos_jugadas',jugadasGuardadas); if(isAdmin() && !esDemoActual()){fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:adminKey,action:'syncAll',jugadores,partidos,pagos,jugadas:jugadasGuardadas})}).then(r=>r.json()).then(d=>{if(d&&d.error){toast('⛔ Servidor rechazó el guardado: '+String(d.error).slice(0,60)); adminVerificado=false; try{sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}}}).catch(()=>{});}}
 function statsJugador(id){let pj=0,goles=0,asist=0,am=0,ro=0;partidos.forEach(p=>{let a=(p.actuaciones||[]).find(x=>String(x.jugadorId)===String(id));if(a){pj++;goles+=+a.goles||0;asist+=+a.asist||0;am+=+a.amarillas||0;ro+=+a.rojas||0}});return{pj,goles,asist,am,ro}}
 function renderAll(){let totalGoles=jugadores.reduce((s,j)=>s+statsJugador(j.id).goles,0);let totPuntos=partidos.reduce((s,pp)=>s+((pp.puntos!=null)?(+pp.puntos||0):((+pp.gf>+pp.gc)?3:((+pp.gf===+pp.gc)?1:0))),0);let pctPuntos=partidos.length?Math.round((totPuntos/(partidos.length*3))*100):0;
 document.getElementById('statsBar').innerHTML=[['JUGADORES',jugadores.length,'👥',100],['PARTIDOS',partidos.length,'📅',partidos.length?100:0],['GOLES',totalGoles,'⚽',Math.min(100,totalGoles*10)],['PUNTOS',totPuntos,'🏆',pctPuntos]].map(x=>`<div class="stat-card"><div class="stat-top"><span class="stat-label">${esc(x[0])}</span><span>${esc(x[2])}</span></div><div class="stat-value">${cleanNum(x[1],9999)}</div><div class="stat-bar"><i style="width:${cleanNum(x[3],100)}%"></i></div></div>`).join('');
@@ -282,7 +283,17 @@ bd.innerHTML=html;o.classList.add('show')}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
 function cerrarAdmin(){adminKey='';adminVerificado=false;try{sessionStorage.removeItem('huastecos_admin_key');sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}document.getElementById('btnAdmin').textContent='🔒';closeModal();toast('Sesión admin cerrada')}
 // PARCHE: loginAdmin AHORA SI EXISTE y verifica contra el servidor
-async async function verificarAdminAlCargar(){
+async 
+function probarClave(){
+  const clave = prompt('Escribe una clave FALSA para probar, por ejemplo 99999-no-es:');
+  if(!clave) return;
+  toast('Probando clave falsa...');
+  fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:clave,action:'checkKey'})}).then(r=>r.json()).then(d=>{
+    if(d && d.ok){ alert('⛔ PELIGRO: El servidor acepto una clave FALSA. Tu Apps Script sigue siendo el VIEJO. Tienes que hacer NUEVA implementacion y cambiar la URL.'); }
+    else { alert('✅ BIEN: El servidor rechazo la clave falsa ('+JSON.stringify(d)+'). Si 12345b te deja entrar, es porque 12345b SI es tu ADMIN_KEY real. Cambiala por una larga.'); }
+  }).catch(()=>alert('⛔ No se pudo conectar al servidor. Revisa la URL /exec.'));
+}
+async function verificarAdminAlCargar(){
   if(!adminKeyPendiente) return;
   try{
     const r = await fetch(SHEETS_API_URL,{method:'POST',body:JSON.stringify({key:adminKeyPendiente,action:'checkKey'})});
@@ -348,7 +359,51 @@ document.getElementById('statsBar').addEventListener('scroll',e=>{let idx=Math.r
 function cleanJugadores(arr){if(!Array.isArray(arr))return null; return arr.slice(0,60).map(j=>{if(!j||typeof j!=='object')return null; const id=cleanId(j.id); if(!id)return null; return {id, nombre:cleanStr(j.nombre,40)||'Jugador', dorsal:String(cleanNum(j.dorsal,99)), pos:grupoPos(j.pos)};}).filter(Boolean);}
 function cleanPartidos(arr){if(!Array.isArray(arr))return []; return arr.slice(0,200).map(p=>{if(!p||typeof p!=='object')return null; return {id:cleanId(p.id)||Date.now().toString(), fecha:cleanStr(p.fecha,10), rival:cleanStr(p.rival,40)||'Rival', gf:cleanNum(p.gf,99), gc:cleanNum(p.gc,99), puntos:cleanNum(p.puntos,999), resultado:'', actuaciones:Array.isArray(p.actuaciones)?p.actuaciones.slice(0,60).map(a=>({jugadorId:cleanId(a.jugadorId), goles:cleanNum(a.goles,99), asist:cleanNum(a.asist,99), amarillas:cleanNum(a.amarillas,99), rojas:cleanNum(a.rojas,99), pj:!!a.pj})).filter(a=>a.jugadorId):[]};}).filter(Boolean);}
 function cleanPagos(arr){if(!Array.isArray(arr))return []; return arr.slice(0,500).map(p=>{if(!p||typeof p!=='object')return null; const id=cleanId(p.jugadorId); if(!id)return null; return {id:cleanId(p.id)||Date.now().toString(), jugadorId:id, cantidad:cleanNum(p.cantidad,20), fecha:cleanStr(p.fecha,10)};}).filter(Boolean);}
-function cargarDeNube(){fetch(SHEETS_API_URL).then(r=>r.json()).then(d=>{if(!d||!Array.isArray(d.jugadores)||!d.jugadores.length) return; const nj=cleanJugadores(d.jugadores); if(!nj||!nj.length) return; let localEsDemo = jugadores.length===14 && partidos.length===0; let nubeTieneMas = nj.length!==jugadores.length || (d.partidos||[]).length!==partidos.length; if(!localEsDemo && !nubeTieneMas) return; jugadores=nj; partidos=cleanPartidos(d.partidos||[]); pagos=cleanPagos(d.pagos||[]); if(Array.isArray(d.jugadas)) jugadasGuardadas=d.jugadas.slice(0,50); safeSet('huastecos_jugadores_v2',jugadores); safeSet('huastecos_partidos_v2',partidos); safeSet('huastecos_pagos',pagos); safeSet('huastecos_jugadas',jugadasGuardadas); renderAll(); try{initPitch();}catch(e){}}).catch(()=>{});}
+// V3 - FIX: ya no compara solo por cantidad. Compara CONTENIDO.
+// Si tu Sheets tiene 14 jugadores con otros nombres, antes no los cargaba porque 14==14.
+let ultimoErrorNube='';
+async function cargarDeNube(forzado){
+  try{
+    const r = await fetch(SHEETS_API_URL);
+    const d = await r.json();
+    console.log('[Huastecos] Nube dice:', d);
+    if(d && d.error){ ultimoErrorNube=d.error; if(forzado) toast('⛔ Nube: '+String(d.error).slice(0,60)); return false; }
+    if(!d || !Array.isArray(d.jugadores)){
+      ultimoErrorNube='La nube no regreso jugadores (revisa Code.gs / nombre de pestañas)';
+      if(forzado) toast('⛔ '+ultimoErrorNube);
+      return false;
+    }
+    if(!d.jugadores.length){
+      ultimoErrorNube='Tu Sheets esta vacio segun la nube (0 jugadores). Revisa que Code.gs lea la pestana correcta.';
+      if(forzado) toast('⛔ Sheets vacio en la nube. No borro tu local para no perder datos.');
+      return false;
+    }
+    const nj=cleanJugadores(d.jugadores);
+    const np=cleanPartidos(d.partidos||[]);
+    const npa=cleanPagos(d.pagos||[]);
+    if(!nj.length){ if(forzado) toast('⛔ Nube sin jugadores validos'); return false; }
+    // Comparar por CONTENIDO, no por cantidad
+    const mismo = JSON.stringify(nj)===JSON.stringify(jugadores) && JSON.stringify(np)===JSON.stringify(partidos);
+    if(mismo && !forzado) return true;
+    jugadores=nj; partidos=np; pagos=npa;
+    if(Array.isArray(d.jugadas)) jugadasGuardadas=d.jugadas.slice(0,50);
+    safeSet('huastecos_jugadores_v2',jugadores); safeSet('huastecos_partidos_v2',partidos); safeSet('huastecos_pagos',pagos); safeSet('huastecos_jugadas',jugadasGuardadas);
+    renderAll(); try{initPitch();}catch(e){}
+    if(forzado) toast('✅ Cargado desde Sheets: '+nj.length+' jugadores, '+np.length+' partidos');
+    return true;
+  }catch(e){
+    ultimoErrorNube='No se pudo conectar a Sheets: '+e.message;
+    if(forzado) toast('⛔ Sin conexion a Sheets. Revisa la URL /exec y que la implementacion sea la NUEVA.');
+    return false;
+  }
+}
+function forzarRecargaNube(){ toast('Cargando desde Sheets...'); cargarDeNube(true); }
+function borrarDemoYCargar(){
+  if(!confirm('¿Borrar lo guardado en este celular y cargar lo de Sheets? Si Sheets esta vacio, te quedas sin nada. ¿Seguro?')) return;
+  try{localStorage.removeItem('huastecos_jugadores_v2');localStorage.removeItem('huastecos_partidos_v2');localStorage.removeItem('huastecos_pagos');localStorage.removeItem('huastecos_jugadas');}catch(e){}
+  jugadores=[]; partidos=[]; pagos=[]; jugadasGuardadas=[];
+  cargarDeNube(true);
+}
 let deferredPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;mostrarInstalar();});
 function estaInstalado(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}

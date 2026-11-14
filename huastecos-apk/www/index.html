@@ -284,7 +284,6 @@ bd.innerHTML=html;o.classList.add('show')}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
 function cerrarAdmin(){adminKey='';adminVerificado=false;try{sessionStorage.removeItem('huastecos_admin_key');sessionStorage.removeItem('huastecos_admin_ok');}catch(e){}document.getElementById('btnAdmin').textContent='🔒';closeModal();toast('Sesión admin cerrada')}
 // PARCHE: loginAdmin AHORA SI EXISTE y verifica contra el servidor
-async 
 function probarClave(){
   const clave = prompt('Escribe una clave FALSA para probar, por ejemplo 99999-no-es:');
   if(!clave) return;
